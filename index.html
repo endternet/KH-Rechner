@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f1">
+<title>KH-Rechner</title>
+<style>
+:root{
+  --bg:#f6f5f1;--card:#ffffff;--soft:#efede6;--line:#e2dfd6;--text:#22211e;--muted:#6d6a62;--faint:#9a978e;
+  --accent:#1f6f5c;--accent-soft:#e1f2ec;--accent-text:#0f5244;--danger:#b2392f;--warn-soft:#fbf1dc;--warn-text:#7a5208;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#171715;--card:#22221f;--soft:#2b2b27;--line:#3a3934;--text:#eeece6;--muted:#aaa69c;--faint:#7c7970;
+  --accent:#5dcaa5;--accent-soft:#163a31;--accent-text:#9fe1cb;--danger:#f09595;--warn-soft:#3b2d10;--warn-text:#f2c879;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+.app{max-width:560px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:baseline;justify-content:space-between;margin:4px 2px 14px}
+h1{font-size:22px;font-weight:600;margin:0}
+h2{font-size:17px;font-weight:600;margin:0 0 10px}
+.sub{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+input,button,select{font:inherit;color:inherit}
+input[type=text],input[type=search],input[inputmode]{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:0 12px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;height:40px;padding:0 14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){button.primary{color:#06231c}}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+button.icon{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-color:transparent;background:transparent;color:var(--faint);font-size:20px}
+button.icon:hover{color:var(--danger)}
+.row{display:flex;gap:8px;align-items:center}
+.grow{flex:1;min-width:0}
+.search{position:relative}
+.results{list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:340px;overflow:auto}
+.results:empty{display:none}
+.results li{padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.results li:last-child{border-bottom:0}
+.results li:hover,.results li.sel{background:var(--soft)}
+.results .hint{cursor:default;color:var(--muted);font-size:14px}
+.results .hint:hover{background:none}
+.nm{font-size:15px}
+.meta{font-size:12px;color:var(--muted)}
+.val{font-size:14px;color:var(--muted);white-space:nowrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent-text);margin-left:6px;vertical-align:1px}
+.tag.own{background:var(--warn-soft);color:var(--warn-text)}
+.items{margin:4px 0 0}
+.item{display:grid;grid-template-columns:minmax(0,1fr) 92px 64px 36px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .nm{overflow-wrap:anywhere;hyphens:auto}
+.item .tag{display:inline-block}
+.item input{height:38px;text-align:right;padding:0 8px}
+.wrap{position:relative}
+.wrap span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--faint);pointer-events:none}
+.wrap input{padding-right:22px}
+.kh{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-size:14px;padding:14px 2px}
+.total{display:flex;justify-content:space-between;align-items:baseline;background:var(--accent-soft);color:var(--accent-text);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
+.total b{font-size:30px;font-weight:650;font-variant-numeric:tabular-nums}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:6px 0;gap:12px}
+.kv .k{color:var(--muted);font-size:14px}
+.kv .v{font-weight:600;font-variant-numeric:tabular-nums}
+.kv input{width:120px;height:38px;text-align:right}
+.plate{border:1.5px solid var(--accent);border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+.plate .res{font-size:26px;font-weight:650;color:var(--accent-text)}
+.list .li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.list .li:last-child{border-bottom:0}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.chips button{height:32px;border-radius:999px;font-size:13px;white-space:nowrap;padding:0 12px}
+.chips button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.err{color:var(--danger);font-size:13px;margin-top:6px;min-height:0}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav .in{max-width:560px;margin:0 auto;display:flex}
+nav button{flex:1;height:62px;border:0;border-radius:0;background:transparent;color:var(--faint);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--accent)}
+.view{display:none}.view.on{display:block}
+.note{font-size:12px;color:var(--faint);margin:18px 2px 0;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.sec-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.back{height:36px;padding:0 10px}
+details summary{cursor:pointer;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- MAHLZEIT -->
+<section class="view" id="v-meal">
+  <header><h1>Mahlzeit</h1><button class="ghost" id="meal-clear">Leeren</button></header>
+  <div class="card">
+    <div class="search" id="meal-search"></div>
+    <div class="items" id="meal-items"></div>
+  </div>
+  <div class="total"><span>Kohlenhydrate gesamt</span><b id="meal-total">0 g</b></div>
+</section>
+
+<!-- REZEPTE -->
+<section class="view" id="v-recipes">
+  <div id="rec-list-view">
+    <header><h1>Rezepte</h1><button class="primary" id="rec-new">Neues Rezept</button></header>
+    <div class="card list" id="rec-list"></div>
+  </div>
+  <div id="rec-edit-view" hidden>
+    <header><button class="back" id="rec-back">‹ Rezepte</button><span class="sub" id="rec-state"></span></header>
+    <div class="card">
+      <input type="text" id="rec-name" placeholder="Name des Rezepts, z. B. Bolognese" aria-label="Name des Rezepts">
+    </div>
+    <div class="card">
+      <h2>Zutaten (Rohgewicht)</h2>
+      <div class="search" id="rec-search"></div>
+      <div class="items" id="rec-items"></div>
+    </div>
+    <div class="card">
+      <div class="kv"><span class="k">KH gesamt</span><span class="v" id="rec-total">0 g</span></div>
+      <div class="kv"><span class="k">Summe Rohgewicht</span><span class="v" id="rec-raw">0 g</span></div>
+      <div class="kv"><span class="k">Gargewicht (fertig gewogen)</span><div class="wrap"><input inputmode="decimal" id="rec-cooked" placeholder="optional"><span>g</span></div></div>
+      <div class="kv"><span class="k">KH pro 100 g fertiges Gericht</span><span class="v" id="rec-per100">–</span></div>
+    </div>
+    <div class="plate">
+      <div class="kv"><span class="k">Mein Teller wiegt</span><div class="wrap"><input inputmode="decimal" id="rec-plate" placeholder="0"><span>g</span></div></div>
+      <div class="kv"><span class="k">Kohlenhydrate</span><span class="res" id="rec-plate-kh">–</span></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="rec-save">Rezept speichern</button>
+      <button id="rec-to-meal">Teller zur Mahlzeit</button>
+      <button class="ghost" id="rec-delete">Löschen</button>
+    </div>
+    <div class="err" id="rec-err"></div>
+  </div>
+</section>
+
+<!-- ZUTATEN -->
+<section class="view" id="v-foods">
+  <header><h1>Zutaten</h1><span class="sub" id="food-count"></span></header>
+  <div class="card">
+    <h2>Eigene Zutat anlegen</h2>
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="own-name" class="grow" placeholder="z. B. Dinkelbrot vom Bäcker" aria-label="Name">
+    </div>
+    <div class="row">
+      <div class="wrap grow"><input inputmode="decimal" id="own-kh" placeholder="KH pro 100 g (Verpackung)" aria-label="KH pro 100 g"><span>g</span></div>
+      <button class="primary" id="own-add">Hinzufügen</button>
+    </div>
+    <div class="err" id="own-err"></div>
+  </div>
+  <div class="card">
+    <input type="search" id="food-filter" placeholder="Liste durchsuchen" aria-label="Liste durchsuchen" style="margin-bottom:10px">
+    <div class="chips" id="food-cats"></div>
+    <div class="list" id="food-list"></div>
+  </div>
+  <div class="card">
+    <details>
+      <summary>Daten sichern und wiederherstellen</summary>
+      <p class="sub">Rezepte und eigene Zutaten werden nur in diesem Browser gespeichert. Sichere sie ab und zu als Datei.</p>
+      <div class="actions">
+        <button id="exp">Sicherung herunterladen</button>
+        <button id="imp-btn">Sicherung laden</button>
+        <input type="file" id="imp" accept="application/json" hidden>
+      </div>
+    </details>
+  </div>
+  <p class="note">Nährwerte: Max Rubner-Institut (2025): Bundeslebensmittelschlüssel (BLS), Version 4.0 – Deutsche Nährstoffdatenbank. Karlsruhe. DOI: 10.25826/Data20251217-134202-0. Angegeben sind verfügbare Kohlenhydrate (ohne Ballaststoffe) pro 100 g. Die Werte sind Durchschnittswerte; bei verpackten Produkten gilt die Nährwertangabe auf der Verpackung.</p>
+</section>
+
+<p class="note" id="disclaimer">Prototyp. Die Berechnung ersetzt keine Absprache mit deinem Diabetes-Team. Bitte Ergebnisse auf Plausibilität prüfen.</p>
+</div>
+
+<nav><div class="in">
+  <button data-tab="meal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v7a3 3 0 0 0 3 3v8M7 3v6M10 3v7a3 3 0 0 1-3 3"/><path d="M19 15V3a4 4 0 0 0-4 4v6c0 1.1.9 2 2 2h2zm0 0v6"/></svg>Mahlzeit</button>
+  <button data-tab="recipes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.9A4 4 0 0 1 7.5 6.1a5 5 0 0 1 9 0A4 4 0 0 1 18 13.9V21H6z"/><path d="M6 17h12"/></svg>Rezepte</button>
+  <button data-tab="foods"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>Zutaten</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+const BLS = [{"c":"B511000","n":"Brötchen (Weizen)","k":"Brot","s":"Semmel Schrippe Weck Wecken","kh":54.0},{"c":"B591000","n":"Mehrkornbrötchen","k":"Brot","s":"Semmel","kh":50.0},{"c":"B401000","n":"Vollkornbrötchen","k":"Brot","s":"Semmel","kh":48.0},{"c":"B723100","n":"Laugenbrezel / Laugengebäck","k":"Brot","s":"Brezel Breze Laugenbrötchen","kh":50.0},{"c":"B781300","n":"Baguettebrötchen","k":"Brot","s":"Baguette","kh":57.0},{"c":"B311000","n":"Weißbrot","k":"Brot","s":"Weizenbrot Baguette","kh":50.5},{"c":"B314000","n":"Toastbrot","k":"Brot","s":"Toast Buttertoast","kh":46.8},{"c":"B111200","n":"Vollkorntoast","k":"Brot","s":"Toast","kh":41.0},{"c":"B271000","n":"Roggenmischbrot","k":"Brot","s":"Graubrot Mischbrot Bauernbrot","kh":42.0},{"c":"B121000","n":"Roggenvollkornbrot","k":"Brot","s":"Schwarzbrot","kh":32.5},{"c":"B101000","n":"Vollkornbrot","k":"Brot","s":"","kh":38.0},{"c":"B106000","n":"Vollkornbrot mit Ölsamen","k":"Brot","s":"Körnerbrot","kh":37.0},{"c":"B710500","n":"Dinkelbrot","k":"Brot","s":"","kh":38.0},{"c":"B780500","n":"Pumpernickel","k":"Brot","s":"","kh":31.1},{"c":"B6A2100","n":"Knäckebrot (Roggenvollkorn)","k":"Brot","s":"Knäcke","kh":59.3},{"c":"B783012","n":"Weizentortilla","k":"Brot","s":"Wrap Tortilla","kh":46.6},{"c":"B782100","n":"Fladenbrot","k":"Brot","s":"Pita Döner","kh":47.0},{"c":"B881100","n":"Eiweißbrot","k":"Brot","s":"Proteinbrot Low Carb","kh":11.0},{"c":"B821000","n":"Paniermehl","k":"Brot","s":"Semmelbrösel Semmelmehl","kh":67.5},{"c":"D038000","n":"Zwieback","k":"Brot","s":"","kh":72.2},{"c":"D771600","n":"Croissant","k":"Gebäck","s":"Hörnchen Gipfeli","kh":44.0},{"c":"D7A6000","n":"Berliner (ungefüllt)","k":"Gebäck","s":"Krapfen Pfannkuchen","kh":40.7},{"c":"D400800","n":"Muffin (Heidelbeer)","k":"Gebäck","s":"","kh":44.3},{"c":"D440300","n":"Sandkuchen / Rührkuchen","k":"Gebäck","s":"Marmorkuchen Kuchen","kh":49.3},{"c":"D540100","n":"Apfelstrudel","k":"Gebäck","s":"Strudel","kh":34.5},{"c":"D621000","n":"Waffeln","k":"Gebäck","s":"Waffel","kh":49.8},{"c":"D790700","n":"Kekse (Vollkorn-Mürbeteig)","k":"Gebäck","s":"Plätzchen Butterkekse","kh":53.1},{"c":"D079000","n":"Pizzateig, roh","k":"Gebäck","s":"Pizza Hefeteig","kh":42.0},{"c":"C214100","n":"Weizenmehl Type 405","k":"Mehl & Getreide","s":"Mehl","kh":71.8},{"c":"C214200","n":"Weizenmehl Type 550","k":"Mehl & Getreide","s":"Mehl","kh":70.5},{"c":"C213200","n":"Weizenmehl Type 1050","k":"Mehl & Getreide","s":"Mehl","kh":67.9},{"c":"C211000","n":"Weizenvollkornmehl","k":"Mehl & Getreide","s":"Mehl Vollkorn","kh":61.8},{"c":"C234000","n":"Dinkelmehl Type 630","k":"Mehl & Getreide","s":"Mehl","kh":68.3},{"c":"C235000","n":"Dinkelvollkornmehl","k":"Mehl & Getreide","s":"Mehl","kh":60.1},{"c":"C223100","n":"Roggenmehl Type 815","k":"Mehl & Getreide","s":"Mehl","kh":65.2},{"c":"C221000","n":"Roggenvollkornmehl","k":"Mehl & Getreide","s":"Mehl","kh":56.6},{"c":"C446000","n":"Speisestärke (Mais)","k":"Mehl & Getreide","s":"Maisstärke Mondamin","kh":85.9},{"c":"K230000","n":"Kartoffelstärke","k":"Mehl & Getreide","s":"Kartoffelmehl","kh":83.1},{"c":"C218000","n":"Weichweizengrieß","k":"Mehl & Getreide","s":"Grieß Griess","kh":74.0},{"c":"C219300","n":"Hartweizengrieß","k":"Mehl & Getreide","s":"Grieß Griess","kh":68.9},{"c":"C133000","n":"Haferflocken","k":"Mehl & Getreide","s":"Hafer Porridge","kh":53.3},{"c":"C138000","n":"Haferkleie","k":"Mehl & Getreide","s":"","kh":53.3},{"c":"C512600","n":"Müsli (Bircher, ungesüßt)","k":"Mehl & Getreide","s":"Muesli","kh":49.4},{"c":"C514200","n":"Knuspermüsli, gesüßt","k":"Mehl & Getreide","s":"Crunchy Granola","kh":56.4},{"c":"C515000","n":"Cornflakes, gesüßt","k":"Mehl & Getreide","s":"Frühstücksflocken","kh":79.3},{"c":"C515400","n":"Cornflakes, ungesüßt","k":"Mehl & Getreide","s":"","kh":83.0},{"c":"C532700","n":"Reiswaffeln","k":"Mehl & Getreide","s":"Reiscracker","kh":77.5},{"c":"C533000","n":"Popcorn, ungesüßt","k":"Mehl & Getreide","s":"","kh":55.3},{"c":"C118000","n":"Quinoa, roh","k":"Mehl & Getreide","s":"","kh":59.6},{"c":"C119100","n":"Bulgur, roh","k":"Mehl & Getreide","s":"","kh":68.0},{"c":"C119132","n":"Bulgur, gekocht","k":"Mehl & Getreide","s":"","kh":29.1},{"c":"C119200","n":"Couscous, roh","k":"Mehl & Getreide","s":"Kuskus","kh":68.9},{"c":"C119232","n":"Couscous, gekocht","k":"Mehl & Getreide","s":"Kuskus","kh":31.1},{"c":"C332000","n":"Hirse, roh","k":"Mehl & Getreide","s":"","kh":67.6},{"c":"C322000","n":"Buchweizen, roh","k":"Mehl & Getreide","s":"","kh":61.9},{"c":"C346000","n":"Maisgrieß / Polenta, roh","k":"Mehl & Getreide","s":"Polenta","kh":62.8},{"c":"C526000","n":"Polenta, gekocht","k":"Mehl & Getreide","s":"","kh":12.4},{"c":"C148000","n":"Graupen, roh","k":"Mehl & Getreide","s":"Gerste Rollgerste","kh":62.6},{"c":"E401000","n":"Nudeln (Hartweizen), roh","k":"Nudeln & Reis","s":"Spaghetti Penne Pasta Teigwaren Fusilli","kh":68.8},{"c":"E401032","n":"Nudeln (Hartweizen), gekocht","k":"Nudeln & Reis","s":"Spaghetti Penne Pasta Teigwaren","kh":28.7},{"c":"E510000","n":"Vollkornnudeln, roh","k":"Nudeln & Reis","s":"Vollkornpasta Vollkornspaghetti","kh":62.9},{"c":"E432000","n":"Eiernudeln, roh","k":"Nudeln & Reis","s":"Bandnudeln Tagliatelle Eierteigwaren","kh":66.1},{"c":"E432032","n":"Eiernudeln, gekocht","k":"Nudeln & Reis","s":"Bandnudeln Tagliatelle","kh":24.7},{"c":"E438000","n":"Frische Pasta (mit Ei), roh","k":"Nudeln & Reis","s":"Frischnudeln","kh":51.8},{"c":"X711512","n":"Spätzle, selbstgemacht, roh","k":"Nudeln & Reis","s":"Spatzen","kh":35.5},{"c":"E605200","n":"Schupfnudeln, roh","k":"Nudeln & Reis","s":"Fingernudeln","kh":33.3},{"c":"K270000","n":"Gnocchi","k":"Nudeln & Reis","s":"","kh":31.9},{"c":"E609100","n":"Tortelloni (Ricotta-Spinat), getrocknet","k":"Nudeln & Reis","s":"Tortellini","kh":47.8},{"c":"C559000","n":"Reisnudeln, roh","k":"Nudeln & Reis","s":"Asia","kh":81.9},{"c":"H030400","n":"Glasnudeln, roh","k":"Nudeln & Reis","s":"Asia","kh":85.9},{"c":"C352000","n":"Reis (weiß), roh","k":"Nudeln & Reis","s":"Basmati Jasmin Langkorn Rundkorn Milchreis Risotto","kh":77.1},{"c":"C352032","n":"Reis (weiß), gekocht","k":"Nudeln & Reis","s":"Basmati Jasmin Langkorn","kh":24.8},{"c":"C359000","n":"Parboiled Reis, roh","k":"Nudeln & Reis","s":"Langkornreis","kh":72.1},{"c":"C359032","n":"Parboiled Reis, gekocht","k":"Nudeln & Reis","s":"","kh":23.8},{"c":"C351000","n":"Naturreis, roh","k":"Nudeln & Reis","s":"Vollkornreis brauner Reis","kh":73.4},{"c":"C351032","n":"Naturreis, gekocht","k":"Nudeln & Reis","s":"Vollkornreis","kh":26.3},{"c":"C353100","n":"Wildreis, roh","k":"Nudeln & Reis","s":"","kh":73.4},{"c":"C453000","n":"Reismehl","k":"Nudeln & Reis","s":"","kh":77.1},{"c":"K110100","n":"Kartoffeln, geschält, roh","k":"Kartoffeln","s":"Erdäpfel Erdapfel Grumbeere","kh":17.9},{"c":"K110132","n":"Kartoffeln, geschält, gekocht","k":"Kartoffeln","s":"Salzkartoffeln Erdäpfel","kh":15.8},{"c":"K120134","n":"Pellkartoffeln, gekocht","k":"Kartoffeln","s":"Erdäpfel","kh":13.6},{"c":"X634012","n":"Kartoffelpüree (mit Milch)","k":"Kartoffeln","s":"Kartoffelbrei Stampf Mus","kh":12.4},{"c":"K213000","n":"Kartoffelpüree-Pulver","k":"Kartoffeln","s":"Instant","kh":70.7},{"c":"X651063","n":"Bratkartoffeln","k":"Kartoffeln","s":"","kh":22.5},{"c":"K130200","n":"Pommes frites, TK, roh","k":"Kartoffeln","s":"Fritten","kh":20.2},{"c":"K130262","n":"Pommes frites, gebacken","k":"Kartoffeln","s":"Fritten","kh":27.4},{"c":"K240400","n":"Kloßteig (Trockenprodukt)","k":"Kartoffeln","s":"Knödel Klöße","kh":70.7},{"c":"K280100","n":"Kartoffelchips","k":"Kartoffeln","s":"Chips","kh":45.9},{"c":"K420100","n":"Süßkartoffel, roh","k":"Kartoffeln","s":"Batate","kh":25.2},{"c":"K420132","n":"Süßkartoffel, gekocht","k":"Kartoffeln","s":"Batate","kh":12.8},{"c":"E606200","n":"Semmelknödel (getrocknet)","k":"Kartoffeln","s":"Knödel","kh":54.3},{"c":"F110100","n":"Apfel","k":"Obst","s":"","kh":11.7},{"c":"F130100","n":"Birne","k":"Obst","s":"","kh":13.2},{"c":"F503100","n":"Banane","k":"Obst","s":"","kh":15.9},{"c":"F603100","n":"Orange","k":"Obst","s":"Apfelsine","kh":8.8},{"c":"F607100","n":"Clementine","k":"Obst","s":"Mandarine","kh":9.2},{"c":"F606100","n":"Mandarine","k":"Obst","s":"","kh":10.1},{"c":"F604100","n":"Grapefruit","k":"Obst","s":"","kh":6.5},{"c":"F601100","n":"Zitrone","k":"Obst","s":"","kh":3.2},{"c":"F514100","n":"Kiwi","k":"Obst","s":"","kh":10.1},{"c":"F516100","n":"Mango","k":"Obst","s":"","kh":12.0},{"c":"F501100","n":"Ananas","k":"Obst","s":"","kh":9.4},{"c":"F310100","n":"Weintrauben","k":"Obst","s":"Trauben","kh":12.2},{"c":"F301100","n":"Erdbeeren","k":"Obst","s":"","kh":5.9},{"c":"F302100","n":"Himbeeren","k":"Obst","s":"","kh":5.2},{"c":"F304100","n":"Heidelbeeren","k":"Obst","s":"Blaubeeren","kh":9.7},{"c":"F303100","n":"Brombeeren","k":"Obst","s":"","kh":10.2},{"c":"F321100","n":"Johannisbeeren, rot","k":"Obst","s":"Ribisel","kh":4.3},{"c":"F211100","n":"Süßkirschen","k":"Obst","s":"Kirschen","kh":15.3},{"c":"F212100","n":"Sauerkirschen","k":"Obst","s":"Kirschen","kh":13.7},{"c":"F220100","n":"Pflaumen","k":"Obst","s":"Zwetschgen","kh":10.7},{"c":"F223100","n":"Zwetschgen","k":"Obst","s":"Pflaumen","kh":10.7},{"c":"F201100","n":"Aprikosen","k":"Obst","s":"Marillen","kh":8.2},{"c":"F203100","n":"Pfirsich","k":"Obst","s":"","kh":8.0},{"c":"F202100","n":"Nektarine","k":"Obst","s":"","kh":9.2},{"c":"F533100","n":"Honigmelone","k":"Obst","s":"Melone","kh":10.1},{"c":"F535100","n":"Wassermelone","k":"Obst","s":"Melone","kh":7.0},{"c":"F505100","n":"Feige, frisch","k":"Obst","s":"","kh":9.6},{"c":"F506100","n":"Granatapfel","k":"Obst","s":"","kh":16.1},{"c":"F517100","n":"Papaya","k":"Obst","s":"","kh":9.6},{"c":"F508100","n":"Maracuja","k":"Obst","s":"Passionsfrucht","kh":9.5},{"c":"F081100","n":"Rhabarber","k":"Obst","s":"","kh":1.4},{"c":"F502100","n":"Avocado","k":"Obst","s":"","kh":1.4},{"c":"F923900","n":"Apfelmus, ungesüßt","k":"Obst","s":"Apfelkompott Apfelmark","kh":14.1},{"c":"F203902","n":"Pfirsiche (Dose, gezuckert)","k":"Obst","s":"Konserve","kh":14.8},{"c":"F501902","n":"Ananas (Dose, gezuckert)","k":"Obst","s":"Konserve","kh":14.0},{"c":"F840100","n":"Rosinen","k":"Obst","s":"Sultaninen Trockenobst","kh":61.8},{"c":"F504400","n":"Datteln, getrocknet","k":"Obst","s":"Trockenobst","kh":79.3},{"c":"F201400","n":"Aprikosen, getrocknet","k":"Obst","s":"Trockenobst","kh":44.0},{"c":"F505400","n":"Feigen, getrocknet","k":"Obst","s":"Trockenobst","kh":55.2},{"c":"F220400","n":"Pflaumen, getrocknet","k":"Obst","s":"Backpflaumen Trockenobst","kh":44.2},{"c":"F414400","n":"Cranberries, getrocknet","k":"Obst","s":"Trockenobst","kh":68.6},{"c":"F516400","n":"Mango, getrocknet","k":"Obst","s":"Trockenobst","kh":65.0},{"c":"G620100","n":"Karotten, roh","k":"Gemüse","s":"Möhren Mohrrüben Rüebli","kh":6.5},{"c":"G620132","n":"Karotten, gekocht","k":"Gemüse","s":"Möhren","kh":5.4},{"c":"G760100","n":"Erbsen, grün, roh","k":"Gemüse","s":"","kh":12.3},{"c":"G760232","n":"Erbsen, TK, gekocht","k":"Gemüse","s":"","kh":9.9},{"c":"G992132","n":"Erbsen und Karotten, gekocht","k":"Gemüse","s":"Gemüsemischung","kh":9.1},{"c":"G570100","n":"Zuckermais, roh","k":"Gemüse","s":"Mais","kh":9.4},{"c":"G570902","n":"Mais (Dose), abgetropft","k":"Gemüse","s":"Zuckermais Konserve","kh":10.8},{"c":"G480100","n":"Zwiebeln","k":"Gemüse","s":"Zwiebel","kh":6.0},{"c":"G485100","n":"Schalotten","k":"Gemüse","s":"","kh":3.2},{"c":"G482100","n":"Frühlingszwiebeln","k":"Gemüse","s":"Lauchzwiebeln","kh":3.0},{"c":"G490100","n":"Knoblauch","k":"Gemüse","s":"","kh":3.0},{"c":"G470100","n":"Lauch","k":"Gemüse","s":"Porree","kh":5.0},{"c":"G561100","n":"Tomaten","k":"Gemüse","s":"Paradeiser","kh":3.2},{"c":"G568900","n":"Tomaten, geschält (Dose)","k":"Gemüse","s":"Paradeiser Konserve stückig","kh":3.2},{"c":"R161200","n":"Tomaten, passiert","k":"Gemüse","s":"Passata Paradeiser","kh":3.9},{"c":"R160000","n":"Tomatenmark","k":"Gemüse","s":"Paradeisermark","kh":13.2},{"c":"G543100","n":"Paprika, rot","k":"Gemüse","s":"Peperoni","kh":6.2},{"c":"G542100","n":"Paprika, gelb","k":"Gemüse","s":"","kh":4.4},{"c":"G541100","n":"Paprika, grün","k":"Gemüse","s":"","kh":6.9},{"c":"G582100","n":"Zucchini","k":"Gemüse","s":"","kh":3.0},{"c":"G510100","n":"Aubergine","k":"Gemüse","s":"Melanzani","kh":3.0},{"c":"G520100","n":"Gurke","k":"Gemüse","s":"Salatgurke","kh":2.0},{"c":"G311100","n":"Blumenkohl","k":"Gemüse","s":"Karfiol","kh":5.3},{"c":"G312100","n":"Brokkoli","k":"Gemüse","s":"Broccoli","kh":2.3},{"c":"G332100","n":"Rosenkohl","k":"Gemüse","s":"Kohlsprossen","kh":2.3},{"c":"G342100","n":"Weißkohl","k":"Gemüse","s":"Kraut Weißkraut","kh":4.5},{"c":"G341100","n":"Rotkohl","k":"Gemüse","s":"Blaukraut Rotkraut","kh":3.7},{"c":"G343100","n":"Wirsing","k":"Gemüse","s":"","kh":4.1},{"c":"G322100","n":"Grünkohl","k":"Gemüse","s":"","kh":3.3},{"c":"G321100","n":"Chinakohl","k":"Gemüse","s":"","kh":1.4},{"c":"G331100","n":"Kohlrabi","k":"Gemüse","s":"","kh":3.9},{"c":"G345100","n":"Sauerkraut","k":"Gemüse","s":"","kh":1.0},{"c":"G211100","n":"Spinat","k":"Gemüse","s":"","kh":0.9},{"c":"G710100","n":"Grüne Bohnen","k":"Gemüse","s":"Fisolen Brechbohnen","kh":3.4},{"c":"G581100","n":"Kürbis","k":"Gemüse","s":"","kh":5.8},{"c":"G613100","n":"Rote Bete","k":"Gemüse","s":"Rote Rübe Rande","kh":7.2},{"c":"G640100","n":"Pastinake","k":"Gemüse","s":"","kh":9.7},{"c":"G660100","n":"Knollensellerie","k":"Gemüse","s":"Sellerie","kh":2.8},{"c":"G220100","n":"Staudensellerie","k":"Gemüse","s":"Bleichsellerie Sellerie","kh":1.5},{"c":"G430100","n":"Fenchel","k":"Gemüse","s":"","kh":3.4},{"c":"G450100","n":"Spargel","k":"Gemüse","s":"","kh":4.0},{"c":"G105100","n":"Kopfsalat","k":"Gemüse","s":"Blattsalat Salat","kh":1.7},{"c":"G103100","n":"Eisbergsalat","k":"Gemüse","s":"Salat","kh":1.6},{"c":"G104100","n":"Feldsalat","k":"Gemüse","s":"Rapunzel Nüsslisalat Salat","kh":0.8},{"c":"G130100","n":"Rucola","k":"Gemüse","s":"Rauke Salat","kh":0.0},{"c":"G680100","n":"Rettich","k":"Gemüse","s":"","kh":3.0},{"c":"G691100","n":"Radieschen","k":"Gemüse","s":"","kh":2.3},{"c":"K701100","n":"Champignons","k":"Gemüse","s":"Pilze","kh":2.9},{"c":"K713100","n":"Pfifferlinge","k":"Gemüse","s":"Pilze Eierschwammerl","kh":0.6},{"c":"H725100","n":"Linsen, getrocknet","k":"Hülsenfrüchte & Nüsse","s":"Linse","kh":44.8},{"c":"H730132","n":"Linsen, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Linse","kh":15.5},{"c":"H730032","n":"Rote Linsen, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Linse","kh":16.3},{"c":"H720902","n":"Kichererbsen (Dose), abgetropft","k":"Hülsenfrüchte & Nüsse","s":"Kichererbse","kh":15.5},{"c":"H742902","n":"Kidneybohnen (Dose), abgetropft","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":15.1},{"c":"H742100","n":"Kidneybohnen, getrocknet","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":40.3},{"c":"H740902","n":"Weiße Bohnen (Dose), abgetropft","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":17.7},{"c":"H900900","n":"Baked Beans (Bohnen in Tomatensoße)","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":12.9},{"c":"G750100","n":"Edamame","k":"Hülsenfrüchte & Nüsse","s":"Sojabohnen","kh":6.2},{"c":"H960000","n":"Hummus","k":"Hülsenfrüchte & Nüsse","s":"Kichererbsenmus","kh":8.0},{"c":"H861000","n":"Tofu","k":"Hülsenfrüchte & Nüsse","s":"","kh":0.0},{"c":"H210100","n":"Mandeln","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":3.9},{"c":"H130100","n":"Haselnüsse","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":4.2},{"c":"H120100","n":"Walnüsse","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":3.0},{"c":"H170100","n":"Cashewkerne","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":26.0},{"c":"H110600","n":"Erdnüsse, geröstet","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":9.9},{"c":"H880200","n":"Erdnussbutter","k":"Hülsenfrüchte & Nüsse","s":"Erdnusscreme","kh":16.1},{"c":"H250100","n":"Pistazien","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":7.6},{"c":"H230132","n":"Maronen, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Esskastanien","kh":38.3},{"c":"H430100","n":"Sonnenblumenkerne","k":"Hülsenfrüchte & Nüsse","s":"Kerne","kh":4.8},{"c":"H310100","n":"Kürbiskerne","k":"Hülsenfrüchte & Nüsse","s":"Kerne","kh":2.8},{"c":"H410100","n":"Leinsamen","k":"Hülsenfrüchte & Nüsse","s":"Kerne","kh":1.7},{"c":"H480100","n":"Chiasamen","k":"Hülsenfrüchte & Nüsse","s":"Chia","kh":3.7},{"c":"H154000","n":"Kokosmilch","k":"Hülsenfrüchte & Nüsse","s":"","kh":2.1},{"c":"M111300","n":"Vollmilch 3,5 %","k":"Milchprodukte","s":"Milch","kh":4.0},{"c":"M111200","n":"Milch 1,5 %","k":"Milchprodukte","s":"fettarme Milch","kh":3.9},{"c":"M114200","n":"Milch 1,5 %, laktosefrei","k":"Milchprodukte","s":"Milch laktosefrei","kh":4.1},{"c":"M150000","n":"Buttermilch","k":"Milchprodukte","s":"","kh":4.7},{"c":"M130300","n":"Kefir","k":"Milchprodukte","s":"","kh":4.1},{"c":"M141300","n":"Joghurt natur 3,5 %","k":"Milchprodukte","s":"Jogurt Naturjoghurt","kh":4.1},{"c":"M141200","n":"Joghurt natur 1,5 %","k":"Milchprodukte","s":"Jogurt Naturjoghurt","kh":6.0},{"c":"M141500","n":"Sahnejoghurt / griech. Joghurt 10 %","k":"Milchprodukte","s":"Griechischer Joghurt Jogurt","kh":4.5},{"c":"M241300","n":"Fruchtjoghurt","k":"Milchprodukte","s":"Jogurt","kh":13.0},{"c":"M713100","n":"Magerquark","k":"Milchprodukte","s":"Topfen Quark","kh":3.7},{"c":"M713300","n":"Quark 20 %","k":"Milchprodukte","s":"Topfen Speisequark","kh":3.0},{"c":"M713500","n":"Quark 40 %","k":"Milchprodukte","s":"Topfen Speisequark Sahnequark","kh":2.6},{"c":"M710100","n":"Skyr","k":"Milchprodukte","s":"","kh":3.2},{"c":"M711300","n":"Hüttenkäse","k":"Milchprodukte","s":"Körniger Frischkäse Cottage Cheese","kh":3.6},{"c":"M710800","n":"Frischkäse (Doppelrahm)","k":"Milchprodukte","s":"Philadelphia","kh":3.7},{"c":"M173800","n":"Sahne 30 %","k":"Milchprodukte","s":"Schlagsahne Rahm Obers Kochsahne","kh":3.3},{"c":"M172500","n":"Saure Sahne","k":"Milchprodukte","s":"Sauerrahm","kh":4.1},{"c":"M172700","n":"Schmand","k":"Milchprodukte","s":"Crème fraîche","kh":3.0},{"c":"M7A6800","n":"Mascarpone","k":"Milchprodukte","s":"","kh":3.4},{"c":"M741600","n":"Ricotta","k":"Milchprodukte","s":"","kh":3.4},{"c":"M402600","n":"Gouda","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M304600","n":"Emmentaler","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M302600","n":"Bergkäse","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M306400","n":"Parmesan","k":"Milchprodukte","s":"Käse Grana","kh":0.1},{"c":"M032100","n":"Mozzarella","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M012200","n":"Feta","k":"Milchprodukte","s":"Käse Schafskäse Hirtenkäse","kh":0.0},{"c":"M602600","n":"Camembert","k":"Milchprodukte","s":"Käse","kh":0.1},{"c":"M832100","n":"Vanillequark (gesüßt)","k":"Milchprodukte","s":"Topfen","kh":18.3},{"c":"M861000","n":"Mousse au Chocolat","k":"Milchprodukte","s":"Dessert","kh":20.3},{"c":"H841100","n":"Sojadrink, ungesüßt","k":"Milchprodukte","s":"Sojamilch Pflanzendrink","kh":0.4},{"c":"C660000","n":"Haferdrink, ungesüßt","k":"Milchprodukte","s":"Hafermilch Pflanzendrink","kh":4.0},{"c":"H800000","n":"Mandeldrink, ungesüßt","k":"Milchprodukte","s":"Mandelmilch Pflanzendrink","kh":0.2},{"c":"C650000","n":"Reisdrink, ungesüßt","k":"Milchprodukte","s":"Reismilch Pflanzendrink","kh":12.3},{"c":"E111100","n":"Ei (Hühnerei)","k":"Fleisch, Fisch, Ei","s":"Eier","kh":0.3},{"c":"U010100","n":"Rinderhackfleisch","k":"Fleisch, Fisch, Ei","s":"Hack Faschiertes","kh":0.0},{"c":"U020100","n":"Schweinehackfleisch","k":"Fleisch, Fisch, Ei","s":"Hack Faschiertes Mett","kh":0.0},{"c":"V416100","n":"Hähnchenbrustfilet","k":"Fleisch, Fisch, Ei","s":"Huhn Hühnchen Poulet","kh":0.0},{"c":"V486100","n":"Putenbrust","k":"Fleisch, Fisch, Ei","s":"Truthahn","kh":0.0},{"c":"W424000","n":"Kochschinken","k":"Fleisch, Fisch, Ei","s":"Schinken","kh":0.7},{"c":"W140000","n":"Salami","k":"Fleisch, Fisch, Ei","s":"Wurst","kh":0.0},{"c":"W211200","n":"Wiener Würstchen","k":"Fleisch, Fisch, Ei","s":"Würstel Frankfurter Wurst","kh":0.0},{"c":"W310000","n":"Leberwurst","k":"Fleisch, Fisch, Ei","s":"Wurst","kh":2.0},{"c":"W412000","n":"Speck","k":"Fleisch, Fisch, Ei","s":"Bacon","kh":0.0},{"c":"T410100","n":"Lachs","k":"Fleisch, Fisch, Ei","s":"Fisch","kh":0.0},{"c":"T121902","n":"Thunfisch (Dose, eigener Saft)","k":"Fleisch, Fisch, Ei","s":"Fisch","kh":0.0},{"c":"T753100","n":"Garnelen","k":"Fleisch, Fisch, Ei","s":"Shrimps Krabben","kh":0.0},{"c":"Q630000","n":"Butter","k":"Fette & Soßen","s":"","kh":0.6},{"c":"Q120000","n":"Olivenöl","k":"Fette & Soßen","s":"Öl","kh":0.0},{"c":"Q180000","n":"Rapsöl","k":"Fette & Soßen","s":"Öl","kh":0.0},{"c":"Q320000","n":"Sonnenblumenöl","k":"Fette & Soßen","s":"Öl","kh":0.0},{"c":"Q991000","n":"Mayonnaise","k":"Fette & Soßen","s":"Mayo","kh":2.3},{"c":"R141100","n":"Tomatenketchup","k":"Fette & Soßen","s":"Ketchup","kh":21.2},{"c":"R132000","n":"Senf, mittelscharf","k":"Fette & Soßen","s":"","kh":2.9},{"c":"R135000","n":"Senf, süß","k":"Fette & Soßen","s":"Weißwurstsenf","kh":25.1},{"c":"R143000","n":"Sojasoße","k":"Fette & Soßen","s":"Sojasauce","kh":5.5},{"c":"R125000","n":"Balsamico-Essig","k":"Fette & Soßen","s":"Essig Aceto","kh":20.0},{"c":"R821000","n":"Gemüsebrühe (Pulver)","k":"Fette & Soßen","s":"Brühwürfel Bouillon","kh":27.9},{"c":"R421100","n":"Backpulver","k":"Fette & Soßen","s":"","kh":21.6},{"c":"S111000","n":"Zucker","k":"Süßes","s":"Haushaltszucker","kh":100.0},{"c":"S112000","n":"Brauner Zucker","k":"Süßes","s":"Rohrzucker","kh":96.7},{"c":"S111100","n":"Puderzucker","k":"Süßes","s":"","kh":100.0},{"c":"S114000","n":"Vanillezucker","k":"Süßes","s":"","kh":100.0},{"c":"S115100","n":"Traubenzucker","k":"Süßes","s":"Dextrose Glukose Hypo","kh":100.0},{"c":"S120000","n":"Honig","k":"Süßes","s":"","kh":74.1},{"c":"S151100","n":"Ahornsirup","k":"Süßes","s":"","kh":59.9},{"c":"S132000","n":"Konfitüre / Marmelade","k":"Süßes","s":"Marmelade Gelee","kh":56.3},{"c":"S131100","n":"Fruchtaufstrich","k":"Süßes","s":"Marmelade","kh":41.7},{"c":"S145000","n":"Nuss-Nougat-Creme","k":"Süßes","s":"Nutella","kh":54.8},{"c":"S530000","n":"Milchschokolade","k":"Süßes","s":"Schokolade Schoki","kh":54.0},{"c":"S560000","n":"Zartbitterschokolade","k":"Süßes","s":"Schokolade","kh":49.6},{"c":"S570000","n":"Bitterschokolade (hoher Kakaoanteil)","k":"Süßes","s":"Schokolade 70","kh":33.7},{"c":"S580000","n":"Weiße Schokolade","k":"Süßes","s":"Schokolade","kh":56.8},{"c":"S361000","n":"Fruchtgummi","k":"Süßes","s":"Gummibärchen","kh":70.7},{"c":"S410000","n":"Lakritze","k":"Süßes","s":"Lakritz","kh":70.6},{"c":"S421000","n":"Marzipan-Rohmasse","k":"Süßes","s":"","kh":37.2},{"c":"S713000","n":"Kakaopulver (ungesüßt)","k":"Süßes","s":"Backkakao","kh":12.3},{"c":"S740000","n":"Trinkschokoladenpulver","k":"Süßes","s":"Kakao Kaba","kh":68.1},{"c":"S241000","n":"Vanilleeis","k":"Süßes","s":"Eis Speiseeis","kh":22.6},{"c":"S242000","n":"Schokoladeneis","k":"Süßes","s":"Eis","kh":29.2},{"c":"D621100","n":"Eiswaffel","k":"Süßes","s":"Waffelhörnchen","kh":37.9},{"c":"F110600","n":"Apfelsaft","k":"Getränke","s":"Saft","kh":10.6},{"c":"F603600","n":"Orangensaft","k":"Getränke","s":"Saft O-Saft","kh":8.5},{"c":"F310600","n":"Traubensaft","k":"Getränke","s":"Saft","kh":16.4},{"c":"N256000","n":"Apfelschorle","k":"Getränke","s":"Saftschorle","kh":6.1},{"c":"N330000","n":"Cola","k":"Getränke","s":"Coca","kh":10.3},{"c":"N331000","n":"Cola light / zero","k":"Getränke","s":"Cola Süßstoff","kh":0.0},{"c":"N019000","n":"Eistee, gesüßt","k":"Getränke","s":"","kh":6.2},{"c":"M206300","n":"Kakao (Milchgetränk)","k":"Getränke","s":"Schokomilch","kh":7.6},{"c":"P163000","n":"Bier (Pils)","k":"Getränke","s":"","kh":2.2},{"c":"P163100","n":"Bier, alkoholfrei","k":"Getränke","s":"","kh":3.7},{"c":"P192000","n":"Radler","k":"Getränke","s":"Alsterwasser","kh":5.7},{"c":"R459000","n":"Hefe, frisch","k":"Backen & Würzen","s":"Frischhefe Germ Backhefe","kh":10.0},{"c":"R458000","n":"Trockenhefe","k":"Backen & Würzen","s":"Hefe Germ Backhefe","kh":14.3},{"c":"R468000","n":"Gelatine","k":"Backen & Würzen","s":"","kh":0.0},{"c":"R481100","n":"Puddingpulver Vanille","k":"Backen & Würzen","s":"Pudding Vanillepudding","kh":84.9},{"c":"R481200","n":"Puddingpulver Schokolade","k":"Backen & Würzen","s":"Pudding Schokopudding","kh":68.8},{"c":"R452000","n":"Vanillinzucker","k":"Backen & Würzen","s":"Vanillezucker","kh":100.0},{"c":"R381100","n":"Orangeat","k":"Backen & Würzen","s":"","kh":62.9},{"c":"R381200","n":"Zitronat","k":"Backen & Würzen","s":"Sukkade","kh":62.9},{"c":"H150400","n":"Kokosraspel","k":"Backen & Würzen","s":"Kokosflocken Kokos","kh":7.8},{"c":"H210400","n":"Mandeln, gemahlen","k":"Backen & Würzen","s":"Nüsse","kh":3.9},{"c":"H130400","n":"Haselnüsse, gemahlen","k":"Backen & Würzen","s":"Nüsse","kh":4.2},{"c":"H720400","n":"Kichererbsenmehl","k":"Backen & Würzen","s":"Mehl","kh":39.6},{"c":"D072000","n":"Blätterteig, roh","k":"Backen & Würzen","s":"Teig","kh":28.6},{"c":"X9A6030","n":"Pizzateig (Hefeteig), roh","k":"Backen & Würzen","s":"Pizza Teig","kh":38.0},{"c":"X9A6060","n":"Pfannkuchenteig, roh","k":"Backen & Würzen","s":"Eierkuchen Palatschinken Crêpes Teig","kh":22.0},{"c":"M181400","n":"Kondensmilch, gezuckert","k":"Backen & Würzen","s":"Milchmädchen","kh":52.9},{"c":"M182400","n":"Kondensmilch, ungezuckert (7,5 %)","k":"Backen & Würzen","s":"Kaffeemilch Bärenmarke","kh":9.3},{"c":"R114000","n":"Jodsalz","k":"Backen & Würzen","s":"Salz","kh":0.0},{"c":"R258100","n":"Pfeffer, schwarz","k":"Backen & Würzen","s":"Gewürz","kh":46.1},{"c":"R211200","n":"Ingwer, frisch","k":"Backen & Würzen","s":"Ingwerwurzel","kh":6.8},{"c":"R910000","n":"Bratensoße (Pulver)","k":"Backen & Würzen","s":"Soße Sauce Instant","kh":51.9},{"c":"R911000","n":"Helle Soße (Pulver)","k":"Backen & Würzen","s":"Soße Sauce Instant","kh":56.9},{"c":"R148600","n":"Grillsoße (Mayonnaise-Basis)","k":"Fette & Soßen","s":"Grillsauce Burgersoße Dip","kh":11.2},{"c":"R141200","n":"Curry-Ketchup","k":"Fette & Soßen","s":"Ketchup Currywurst","kh":21.2},{"c":"R921000","n":"Sahne für Torten (gesüßt)","k":"Backen & Würzen","s":"","kh":7.8},{"c":"Q400000","n":"Margarine","k":"Fette & Soßen","s":"Pflanzenmargarine Rama Butter","kh":0.2},{"c":"Q440000","n":"Halbfettmargarine","k":"Fette & Soßen","s":"Margarine","kh":3.1},{"c":"Q481000","n":"Backmargarine","k":"Fette & Soßen","s":"Margarine","kh":0.0},{"c":"Q640000","n":"Halbfettbutter","k":"Fette & Soßen","s":"Butter","kh":0.6},{"c":"Q683000","n":"Butterschmalz","k":"Fette & Soßen","s":"Ghee","kh":0.0},{"c":"Q860000","n":"Schweineschmalz","k":"Fette & Soßen","s":"Schmalz","kh":0.0},{"c":"Q550000","n":"Kokosöl","k":"Fette & Soßen","s":"Öl Kokosfett","kh":0.0},{"c":"Q901000","n":"Tahin (Sesammus)","k":"Fette & Soßen","s":"Tahini","kh":0.7},{"c":"G560400","n":"Tomaten, getrocknet","k":"Gemüse","s":"Paradeiser","kh":41.7},{"c":"G520802","n":"Gewürzgurken","k":"Gemüse","s":"Essiggurken Cornichons Gurke","kh":5.5},{"c":"G890702","n":"Salzgurken","k":"Gemüse","s":"Saure Gurken Gurke","kh":1.4},{"c":"G341900","n":"Rotkohl (Glas, küchenfertig)","k":"Gemüse","s":"Blaukraut Rotkraut","kh":10.3},{"c":"G341132","n":"Rotkohl, gekocht","k":"Gemüse","s":"Blaukraut Rotkraut","kh":3.0},{"c":"G613132","n":"Rote Bete, gekocht","k":"Gemüse","s":"Rote Rübe Rande","kh":11.0},{"c":"G311132","n":"Blumenkohl, gekocht","k":"Gemüse","s":"Karfiol","kh":5.1},{"c":"G312132","n":"Brokkoli, gekocht","k":"Gemüse","s":"Broccoli","kh":2.5},{"c":"G332132","n":"Rosenkohl, gekocht","k":"Gemüse","s":"","kh":5.0},{"c":"G710132","n":"Grüne Bohnen, gekocht","k":"Gemüse","s":"Fisolen","kh":4.1},{"c":"G210132","n":"Spinat, gekocht","k":"Gemüse","s":"","kh":0.5},{"c":"G211200","n":"Spinat, TK","k":"Gemüse","s":"Rahmspinat","kh":1.0},{"c":"G012902","n":"Kapern","k":"Gemüse","s":"","kh":0.0},{"c":"H510802","n":"Oliven, grün","k":"Gemüse","s":"","kh":0.0},{"c":"H520800","n":"Oliven, schwarz","k":"Gemüse","s":"","kh":0.0},{"c":"G061000","n":"Basilikum, frisch","k":"Gemüse","s":"Kräuter","kh":0.3},{"c":"G250100","n":"Petersilie","k":"Gemüse","s":"Kräuter","kh":1.3},{"c":"G081100","n":"Schnittlauch","k":"Gemüse","s":"Kräuter","kh":1.5},{"c":"K724100","n":"Shiitake","k":"Gemüse","s":"Pilze","kh":2.4},{"c":"K718100","n":"Steinpilze","k":"Gemüse","s":"Pilze","kh":3.3},{"c":"F213902","n":"Sauerkirschen (Glas, ungesüßt)","k":"Obst","s":"Kirschen Konserve","kh":5.5},{"c":"F212902","n":"Sauerkirschen (Glas, gezuckert)","k":"Obst","s":"Kirschen Konserve","kh":11.1},{"c":"F606902","n":"Mandarinen (Dose, gezuckert)","k":"Obst","s":"Konserve","kh":16.1},{"c":"F091902","n":"Fruchtcocktail (Dose)","k":"Obst","s":"Obstsalat Konserve","kh":10.6},{"c":"F120100","n":"Apfel, geschält","k":"Obst","s":"","kh":8.9},{"c":"F311100","n":"Weintrauben, rot","k":"Obst","s":"Trauben","kh":17.5},{"c":"F312100","n":"Weintrauben, weiß","k":"Obst","s":"Trauben","kh":15.5},{"c":"F323100","n":"Johannisbeeren, schwarz","k":"Obst","s":"Cassis","kh":8.7},{"c":"F305100","n":"Stachelbeeren","k":"Obst","s":"","kh":9.8},{"c":"F504100","n":"Datteln, frisch","k":"Obst","s":"","kh":31.6},{"c":"F515100","n":"Litschi","k":"Obst","s":"","kh":18.4},{"c":"F552100","n":"Physalis","k":"Obst","s":"Kapstachelbeere","kh":14.1},{"c":"F503400","n":"Bananenchips","k":"Obst","s":"Trockenobst","kh":58.9},{"c":"F090400","n":"Trockenobst-Mix","k":"Obst","s":"Trockenobst","kh":55.5},{"c":"G770400","n":"Kichererbsen, getrocknet","k":"Hülsenfrüchte & Nüsse","s":"Kichererbse","kh":39.6},{"c":"G770432","n":"Kichererbsen, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Kichererbse","kh":17.4},{"c":"G760400","n":"Erbsen, getrocknet (Schälerbsen)","k":"Hülsenfrüchte & Nüsse","s":"Spalterbsen","kh":40.5},{"c":"G760432","n":"Erbsen, getrocknet, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Spalterbsen","kh":14.9},{"c":"H739400","n":"Weiße Bohnen, getrocknet","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":45.8},{"c":"H740132","n":"Weiße Bohnen, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":17.8},{"c":"H742132","n":"Kidneybohnen, gekocht","k":"Hülsenfrüchte & Nüsse","s":"Bohnen","kh":15.2},{"c":"H765000","n":"Sojaschnetzel, trocken","k":"Hülsenfrüchte & Nüsse","s":"Sojagranulat Vegan","kh":13.5},{"c":"C558000","n":"Seitan","k":"Hülsenfrüchte & Nüsse","s":"Vegan Fleischersatz","kh":4.0},{"c":"H910400","n":"Veganes Schnitzel","k":"Hülsenfrüchte & Nüsse","s":"Vegan Fleischersatz","kh":13.6},{"c":"H810000","n":"Studentenfutter","k":"Hülsenfrüchte & Nüsse","s":"Nüsse Rosinen","kh":32.3},{"c":"H180100","n":"Paranüsse","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":2.8},{"c":"H190100","n":"Macadamia","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":5.2},{"c":"H160100","n":"Pekannüsse","k":"Hülsenfrüchte & Nüsse","s":"Nüsse","kh":3.0},{"c":"H320100","n":"Pinienkerne","k":"Hülsenfrüchte & Nüsse","s":"Kerne","kh":6.2},{"c":"H420100","n":"Sesam","k":"Hülsenfrüchte & Nüsse","s":"Kerne","kh":1.4},{"c":"M176800","n":"Crème fraîche","k":"Milchprodukte","s":"Creme fraiche Sauerrahm","kh":2.5},{"c":"M171500","n":"Kaffeesahne 10 %","k":"Milchprodukte","s":"Kaffeerahm Sahne","kh":4.0},{"c":"M173900","n":"Schlagsahne 36 %","k":"Milchprodukte","s":"Rahm Obers","kh":3.0},{"c":"M113300","n":"H-Milch 3,5 %","k":"Milchprodukte","s":"Milch Vollmilch","kh":4.2},{"c":"M021000","n":"Ziegenmilch","k":"Milchprodukte","s":"Milch","kh":4.2},{"c":"M501600","n":"Butterkäse","k":"Milchprodukte","s":"Käse","kh":0.1},{"c":"M401600","n":"Edamer","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M403600","n":"Tilsiter","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M601600","n":"Brie","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M5B1600","n":"Gorgonzola","k":"Milchprodukte","s":"Käse Blauschimmel","kh":0.0},{"c":"M524500","n":"Halloumi","k":"Milchprodukte","s":"Grillkäse Käse","kh":0.1},{"c":"M307700","n":"Raclettekäse","k":"Milchprodukte","s":"Käse","kh":0.0},{"c":"M303600","n":"Cheddar","k":"Milchprodukte","s":"Käse Chester","kh":0.0},{"c":"M771600","n":"Schmelzkäse (Scheiben)","k":"Milchprodukte","s":"Scheiblette Toastkäse Käse","kh":5.1},{"c":"M6A9600","n":"Ziegenkäse (Weichkäse)","k":"Milchprodukte","s":"Käse","kh":1.9},{"c":"M730100","n":"Harzer Käse","k":"Milchprodukte","s":"Sauermilchkäse Quargel Käse","kh":0.0},{"c":"Q590000","n":"Käsealternative, vegan","k":"Milchprodukte","s":"Käse vegan","kh":21.2},{"c":"M246000","n":"Schokojoghurt","k":"Milchprodukte","s":"Jogurt","kh":14.9},{"c":"M831300","n":"Fruchtquark","k":"Milchprodukte","s":"Topfen Quarkspeise","kh":15.0},{"c":"R481132","n":"Vanillepudding (zubereitet)","k":"Milchprodukte","s":"Pudding Dessert","kh":15.3},{"c":"R481232","n":"Schokopudding (zubereitet)","k":"Milchprodukte","s":"Pudding Dessert","kh":16.5},{"c":"X810033","n":"Milchreis (gesüßt, zubereitet)","k":"Milchprodukte","s":"Reis Dessert","kh":22.4},{"c":"X951113","n":"Grießbrei (gesüßt)","k":"Milchprodukte","s":"Grießpudding Dessert","kh":12.9},{"c":"M200300","n":"Milchmischgetränk (gesüßt)","k":"Milchprodukte","s":"Erdbeermilch Vanillemilch","kh":8.5},{"c":"U211100","n":"Rinderfilet","k":"Fleisch, Fisch, Ei","s":"Steak Rind","kh":0.0},{"c":"U284100","n":"Rinderhüfte","k":"Fleisch, Fisch, Ei","s":"Steak Rind","kh":0.0},{"c":"U611100","n":"Schweinefilet","k":"Fleisch, Fisch, Ei","s":"Schwein","kh":0.0},{"c":"U541100","n":"Schweineschnitzel","k":"Fleisch, Fisch, Ei","s":"Schnitzel Schwein","kh":0.0},{"c":"U622100","n":"Schweinekotelett","k":"Fleisch, Fisch, Ei","s":"Kotelett Schwein","kh":0.0},{"c":"V414100","n":"Hähnchen (ganz, mit Haut)","k":"Fleisch, Fisch, Ei","s":"Huhn Hühnchen","kh":0.0},{"c":"U051100","n":"Frikadelle, roh","k":"Fleisch, Fisch, Ei","s":"Bulette Fleischpflanzerl","kh":4.0},{"c":"Y396512","n":"Frikadelle, gebraten","k":"Fleisch, Fisch, Ei","s":"Bulette Fleischpflanzerl","kh":8.4},{"c":"W183000","n":"Bratwurst","k":"Fleisch, Fisch, Ei","s":"Wurst","kh":0.1},{"c":"W233000","n":"Leberkäse","k":"Fleisch, Fisch, Ei","s":"Fleischkäse Wurst","kh":0.6},{"c":"W231100","n":"Lyoner / Fleischwurst","k":"Fleisch, Fisch, Ei","s":"Wurst Extrawurst","kh":0.2},{"c":"W231200","n":"Mortadella","k":"Fleisch, Fisch, Ei","s":"Wurst Schinkenwurst","kh":0.2},{"c":"W442000","n":"Schwarzwälder Schinken","k":"Fleisch, Fisch, Ei","s":"Rohschinken Schinken","kh":0.1},{"c":"T204100","n":"Kabeljau","k":"Fleisch, Fisch, Ei","s":"Dorsch Fisch","kh":0.0},{"c":"T207100","n":"Seelachs","k":"Fleisch, Fisch, Ei","s":"Fisch","kh":0.0},{"c":"T410600","n":"Räucherlachs","k":"Fleisch, Fisch, Ei","s":"Lachs Fisch","kh":0.2},{"c":"T422600","n":"Forelle, geräuchert","k":"Fleisch, Fisch, Ei","s":"Fisch","kh":0.0},{"c":"T811100","n":"Matjes","k":"Fleisch, Fisch, Ei","s":"Hering Fisch","kh":0.0},{"c":"T930100","n":"Fischstäbchen (TK)","k":"Fleisch, Fisch, Ei","s":"Fisch paniert","kh":14.4},{"c":"Y720143","n":"Rührei","k":"Fleisch, Fisch, Ei","s":"Ei Eier","kh":0.4},{"c":"D064000","n":"Salzstangen / Salzbrezeln","k":"Gebäck","s":"Knabberzeug Snack","kh":73.7},{"c":"D050000","n":"Cracker","k":"Gebäck","s":"Snack","kh":58.5},{"c":"D630400","n":"Butterkekse","k":"Gebäck","s":"Kekse","kh":68.9},{"c":"D650600","n":"Lebkuchen, schokoliert","k":"Gebäck","s":"Kekse Weihnachten","kh":64.6},{"c":"D7A5500","n":"Rosinenbrötchen","k":"Gebäck","s":"Semmel","kh":53.8},{"c":"D4A6100","n":"Hefezopf (mit Rosinen)","k":"Gebäck","s":"Striezel","kh":60.0},{"c":"D7A5300","n":"Zimtschnecke","k":"Gebäck","s":"Franzbrötchen","kh":56.3},{"c":"D131200","n":"Apfelkuchen (Rührteig)","k":"Gebäck","s":"Kuchen","kh":27.8},{"c":"D1A1000","n":"Apfel-Streuselkuchen","k":"Gebäck","s":"Kuchen","kh":29.0},{"c":"D461500","n":"Streuselkuchen","k":"Gebäck","s":"Kuchen","kh":57.0},{"c":"D470100","n":"Käsekuchen","k":"Gebäck","s":"Quarkkuchen Kuchen","kh":26.3},{"c":"D200300","n":"Erdbeerkuchen","k":"Gebäck","s":"Obstkuchen Kuchen","kh":18.5},{"c":"D077002","n":"Biskuitboden","k":"Gebäck","s":"Tortenboden","kh":47.8},{"c":"D380900","n":"Mürbeteigboden","k":"Gebäck","s":"Tortenboden","kh":51.7},{"c":"D771700","n":"Schokocroissant","k":"Gebäck","s":"Croissant","kh":48.0},{"c":"D400400","n":"Schokomuffin","k":"Gebäck","s":"Muffin","kh":43.5},{"c":"B314200","n":"Mehrkorntoast","k":"Brot","s":"Toast","kh":46.0},{"c":"B8A1000","n":"Baguette, glutenfrei","k":"Brot","s":"glutenfrei","kh":45.0},{"c":"B8A8000","n":"Toastbrot, glutenfrei","k":"Brot","s":"glutenfrei","kh":44.0},{"c":"E612100","n":"Nudeln, glutenfrei, roh","k":"Nudeln & Reis","s":"glutenfrei Pasta","kh":74.7},{"c":"E606032","n":"Semmelknödel, gekocht","k":"Kartoffeln","s":"Knödel","kh":22.0},{"c":"X671042","n":"Kartoffelklöße (Thüringer)","k":"Kartoffeln","s":"Knödel Klöße","kh":15.7},{"c":"X655022","n":"Kartoffelpuffer","k":"Kartoffeln","s":"Reibekuchen Rösti Reiberdatschi","kh":18.1},{"c":"X1A2010","n":"Kartoffelsalat (Essig-Öl)","k":"Kartoffeln","s":"Salat","kh":11.4},{"c":"X1A2020","n":"Kartoffelsalat (Mayonnaise)","k":"Kartoffeln","s":"Salat","kh":10.1},{"c":"C236100","n":"Dinkelflocken","k":"Mehl & Getreide","s":"Flocken","kh":58.8},{"c":"C335000","n":"Amaranth, roh","k":"Mehl & Getreide","s":"","kh":62.4},{"c":"C530100","n":"Amaranth, gepufft","k":"Mehl & Getreide","s":"Pops","kh":66.9},{"c":"X8A1100","n":"Sushi-Reis","k":"Nudeln & Reis","s":"Sushi","kh":22.7},{"c":"X912033","n":"Pizza Margherita","k":"Gerichte","s":"Pizza","kh":20.0},{"c":"X914233","n":"Pizza Quattro Stagioni","k":"Gerichte","s":"Pizza Schinken","kh":15.0},{"c":"X912233","n":"Pizza Quattro Formaggi","k":"Gerichte","s":"Pizza Käse","kh":26.0},{"c":"X730033","n":"Lasagne","k":"Gerichte","s":"Lasagne al forno","kh":8.9},{"c":"Y038213","n":"Bolognese-Soße","k":"Gerichte","s":"Sauce Hackfleischsoße","kh":2.9},{"c":"X469743","n":"Chili con Carne","k":"Gerichte","s":"Chili","kh":8.0},{"c":"X462513","n":"Linsensuppe","k":"Gerichte","s":"Linseneintopf Suppe","kh":10.0},{"c":"X4A8020","n":"Erbsensuppe","k":"Gerichte","s":"Erbseneintopf Suppe","kh":6.0},{"c":"X416713","n":"Gemüsesuppe","k":"Gerichte","s":"Suppe","kh":1.9},{"c":"Y1A1000","n":"Gulasch (Rind)","k":"Gerichte","s":"Gulasch","kh":4.2},{"c":"X929212","n":"Pfannkuchen","k":"Gerichte","s":"Eierkuchen Palatschinken Crêpes","kh":30.1},{"c":"Y890342","n":"Kaiserschmarrn","k":"Gerichte","s":"","kh":23.4},{"c":"Y911060","n":"Hamburger","k":"Gerichte","s":"Burger Fast Food","kh":19.7},{"c":"Y911160","n":"Cheeseburger","k":"Gerichte","s":"Burger Fast Food","kh":18.1},{"c":"Y9A1000","n":"Chickenburger","k":"Gerichte","s":"Burger Fast Food","kh":17.6},{"c":"Y910030","n":"Pommes mit Ketchup","k":"Gerichte","s":"Fritten Fast Food","kh":29.5},{"c":"Y627112","n":"Sushi mit Lachs","k":"Gerichte","s":"Sushi","kh":16.4},{"c":"Y9A1070","n":"Lahmacun","k":"Gerichte","s":"Türkische Pizza","kh":22.0},{"c":"S830000","n":"Müsliriegel","k":"Süßes","s":"Riegel Getreideriegel","kh":58.5},{"c":"S582500","n":"Schokoriegel (Karamell)","k":"Süßes","s":"Riegel","kh":68.7},{"c":"S581100","n":"Schokoriegel (Erdnuss-Karamell)","k":"Süßes","s":"Riegel","kh":55.0},{"c":"S372000","n":"Marshmallows","k":"Süßes","s":"Mäusespeck","kh":84.0},{"c":"S311000","n":"Bonbons","k":"Süßes","s":"Zuckerl Hartkaramelle","kh":92.8},{"c":"S342000","n":"Fruchtgummi, zuckerfrei","k":"Süßes","s":"Gummibärchen","kh":77.0},{"c":"S132100","n":"Konfitüre, zuckerreduziert (Süßstoff)","k":"Süßes","s":"Marmelade light","kh":36.9},{"c":"S152000","n":"Melasse","k":"Süßes","s":"Zuckerrübensirup","kh":55.9},{"c":"S141000","n":"Schoko-Nuss-Creme","k":"Süßes","s":"Aufstrich","kh":35.4},{"c":"S230000","n":"Sahneeis","k":"Süßes","s":"Eis","kh":12.5},{"c":"S221700","n":"Joghurteis","k":"Süßes","s":"Eis Frozen Yogurt","kh":21.0},{"c":"F016600","n":"Multivitaminsaft","k":"Getränke","s":"Saft Mehrfruchtsaft","kh":12.3},{"c":"F032600","n":"Smoothie (Früchte)","k":"Getränke","s":"","kh":11.0},{"c":"N310400","n":"Zitronenlimonade","k":"Getränke","s":"Limo Sprite","kh":9.3},{"c":"N310300","n":"Orangenlimonade","k":"Getränke","s":"Limo Fanta","kh":8.3},{"c":"N311000","n":"Limonade mit Süßstoff","k":"Getränke","s":"Limo zero light","kh":0.1},{"c":"N257000","n":"Orangensaftschorle","k":"Getränke","s":"Saftschorle","kh":4.9},{"c":"N265000","n":"ACE-Getränk","k":"Getränke","s":"Saft","kh":10.0},{"c":"N410100","n":"Kaffee (schwarz)","k":"Getränke","s":"","kh":0.0},{"c":"N630000","n":"Tee (schwarz)","k":"Getränke","s":"","kh":0.0},{"c":"N120000","n":"Mineralwasser","k":"Getränke","s":"Wasser Sprudel","kh":0.0},{"c":"P2A3000","n":"Rotwein, trocken","k":"Getränke","s":"Wein","kh":0.7},{"c":"P210000","n":"Weißwein, trocken","k":"Getränke","s":"Wein","kh":0.3},{"c":"P231000","n":"Weißwein, süß","k":"Getränke","s":"Wein","kh":6.2},{"c":"P2A6000","n":"Sekt, trocken","k":"Getränke","s":"Schaumwein Prosecco","kh":2.1},{"c":"P163110","n":"Bier, 0,0 %","k":"Getränke","s":"alkoholfrei","kh":4.4}];
+const KEY = 'khRechner.v1';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) && n >= 0 ? n : 0; };
+const fmt = (n, d = 1) => (Math.round(n * Math.pow(10, d)) / Math.pow(10, d)).toLocaleString('de-DE', {minimumFractionDigits: 0, maximumFractionDigits: d});
+const gKH = n => fmt(n, n < 10 ? 1 : 0) + ' g';
+
+// ---------- Speicher ----------
+let S = {tab: 'meal', meal: [], recipes: [], own: [], recent: [], draft: null};
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1600); }
+
+// ---------- Suche ----------
+const norm = s => String(s).toLowerCase()
+  .replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss')
+  .replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u')
+  .replace(/[^a-z0-9]+/g, ' ').trim();
+
+function allFoods(withRecipes) {
+  const base = BLS.map(f => ({id: f.c, name: f.n, kh: f.kh, cat: f.k, syn: f.s, src: 'BLS ' + f.c}));
+  const own = S.own.map(f => ({id: f.id, name: f.name, kh: f.kh, cat: 'Eigene', syn: '', src: 'Eigene', own: true}));
+  let list = own.concat(base);
+  if (withRecipes) list = S.recipes.filter(r => r.per100 != null).map(r => ({id: r.id, name: r.name, kh: r.per100, cat: 'Rezept', syn: '', src: 'Rezept', recipe: true})).concat(list);
+  return list.map(f => (f._name = norm(f.name), f._syn = ' ' + norm(f.syn) + ' ', f._hay = norm(f.name + ' ' + f.syn + ' ' + f.cat), f));
+}
+
+function searchFoods(q, withRecipes) {
+  const toks = norm(q).split(' ').filter(Boolean);
+  const list = allFoods(withRecipes);
+  if (!toks.length) {
+    return S.recent.map(id => list.find(f => f.id === id)).filter(Boolean).slice(0, 8);
+  }
+  const out = [];
+  for (const f of list) {
+    if (!toks.every(t => f._hay.includes(t))) continue;
+    let sc = 0;
+    const words = ' ' + f._name;
+    toks.forEach((t, i) => {
+      if ((' ' + f._name + ' ').includes(' ' + t + ' ')) sc += 60;
+      else if (i === 0 && f._name.startsWith(t)) sc += 50;
+      else if (words.includes(' ' + t)) sc += 30;
+      else if (f._syn.includes(' ' + t + ' ')) sc += 50;
+      else if (f._syn.includes(' ' + t)) sc += 25;
+      else if (f._name.includes(t)) sc += 15;
+    });
+    if (f.own) sc += 40;
+    if (f.recipe) sc += 35;
+    const ri = S.recent.indexOf(f.id);
+    if (ri >= 0) sc += 25 - ri;
+    out.push([sc, f]);
+  }
+  out.sort((a, b) => b[0] - a[0] || a[1].name.length - b[1].name.length);
+  return out.slice(0, 30).map(x => x[1]);
+}
+
+function remember(id) { S.recent = [id].concat(S.recent.filter(x => x !== id)).slice(0, 20); }
+
+function mountSearch(el, opts) {
+  el.innerHTML = '<input type="search" placeholder="Zutat suchen, z. B. reis roh" autocomplete="off" aria-label="Zutat suchen"><ul class="results"></ul>';
+  const inp = el.querySelector('input'), ul = el.querySelector('ul');
+  let items = [], sel = -1, open = false;
+  function render() {
+    if (!open) { ul.innerHTML = ''; return; }
+    items = searchFoods(inp.value, opts.recipes);
+    if (!items.length) {
+      ul.innerHTML = inp.value.trim()
+        ? '<li class="hint">Nichts gefunden. Lege die Zutat im Bereich „Zutaten“ selbst an.</li>'
+        : (S.recent.length ? '' : '<li class="hint">Tippe los – die Suche startet sofort.</li>');
+      return;
+    }
+    ul.innerHTML = (inp.value.trim() ? '' : '<li class="hint">Zuletzt verwendet</li>') + items.map((f, i) =>
+      `<li data-i="${i}" class="${i === sel ? 'sel' : ''}"><div><div class="nm">${esc(f.name)}${f.own ? '<span class="tag own">eigene</span>' : ''}${f.recipe ? '<span class="tag">Rezept</span>' : ''}</div><div class="meta">${esc(f.cat)}</div></div><div class="val">${fmt(f.kh)} g/100 g</div></li>`).join('');
+  }
+  function pick(i) {
+    const f = items[i]; if (!f) return;
+    remember(f.id); inp.value = ''; sel = -1; open = false; render();
+    opts.onPick(f);
+  }
+  inp.addEventListener('focus', () => { open = true; sel = -1; render(); });
+  inp.addEventListener('input', () => { open = true; sel = 0; render(); });
+  inp.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== inp) { open = false; render(); } }, 150));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { sel = Math.min(sel + 1, items.length - 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sel = Math.max(sel - 1, 0); render(); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (items.length) pick(sel < 0 ? 0 : sel); e.preventDefault(); }
+    else if (e.key === 'Escape') { inp.blur(); }
+  });
+  ul.addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li) { e.preventDefault(); pick(+li.dataset.i); } });
+  return inp;
+}
+
+// ---------- Zutatenzeilen (Mahlzeit + Rezept) ----------
+function renderItems(container, arr, emptyText, onChange) {
+  if (!arr.length) { container.innerHTML = `<div class="empty">${emptyText}</div>`; onChange(); return; }
+  container.innerHTML = arr.map((it, i) => `
+    <div class="item" data-i="${i}">
+      <div><div class="nm">${esc(it.name)}${it.recipe ? '<span class="tag">Rezept</span>' : ''}${it.own ? '<span class="tag own">eigene</span>' : ''}</div><div class="meta">${fmt(it.kh)} g KH/100 g</div></div>
+      <div class="wrap"><input inputmode="decimal" value="${it.g === '' ? '' : esc(it.g)}" placeholder="0" aria-label="Gewicht in Gramm"><span>g</span></div>
+      <div class="kh">${gKH(it.kh * num(it.g) / 100)}</div>
+      <button class="icon" aria-label="Entfernen">×</button>
+    </div>`).join('');
+  container.querySelectorAll('.item').forEach(row => {
+    const i = +row.dataset.i, inp = row.querySelector('input');
+    inp.addEventListener('input', () => { arr[i].g = inp.value; row.querySelector('.kh').textContent = gKH(arr[i].kh * num(inp.value) / 100); onChange(); });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { inp.blur(); container.parentElement.querySelector('.search input').focus(); } });
+    row.querySelector('button').addEventListener('click', () => { arr.splice(i, 1); renderItems(container, arr, emptyText, onChange); });
+  });
+  onChange();
+}
+function addItem(arr, f, container, rerender) {
+  arr.push({id: f.id, name: f.name, kh: f.kh, g: '', recipe: !!f.recipe, own: !!f.own});
+  rerender();
+  const inputs = container.querySelectorAll('.item input');
+  const last = inputs[inputs.length - 1]; if (last) last.focus();
+}
+const sumKH = arr => arr.reduce((s, it) => s + it.kh * num(it.g) / 100, 0);
+const sumG = arr => arr.reduce((s, it) => s + num(it.g), 0);
+
+// ---------- Mahlzeit ----------
+function renderMeal() { renderItems($('#meal-items'), S.meal, 'Noch keine Zutaten. Suche oben nach einer Zutat oder einem gespeicherten Rezept.', () => { $('#meal-total').textContent = gKH(sumKH(S.meal)); save(); }); }
+mountSearch($('#meal-search'), {recipes: true, onPick: f => addItem(S.meal, f, $('#meal-items'), renderMeal)});
+$('#meal-clear').addEventListener('click', () => { if (!S.meal.length) return; S.meal = []; renderMeal(); toast('Mahlzeit geleert'); });
+
+// ---------- Rezepte ----------
+function renderRecList() {
+  const el = $('#rec-list');
+  if (!S.recipes.length) { el.innerHTML = '<div class="empty">Noch keine Rezepte. Lege dein erstes Rezept an – danach kannst du es in jeder Mahlzeit wie eine Zutat verwenden.</div>'; return; }
+  el.innerHTML = S.recipes.slice().sort((a, b) => a.name.localeCompare(b.name, 'de')).map(r =>
+    `<div class="li" data-id="${r.id}"><div><div class="nm">${esc(r.name)}</div><div class="meta">${r.items.length} Zutaten · ${gKH(sumKH(r.items))} KH gesamt</div></div><div class="val">${r.per100 != null ? fmt(r.per100) + ' g/100 g' : '–'}</div></div>`).join('');
+  el.querySelectorAll('.li').forEach(li => li.addEventListener('click', () => openRecipe(li.dataset.id)));
+}
+function openRecipe(id) {
+  const r = id ? S.recipes.find(x => x.id === id) : null;
+  S.draft = r ? JSON.parse(JSON.stringify({id: r.id, name: r.name, items: r.items, cooked: r.cooked || '', plate: ''})) : {id: null, name: '', items: [], cooked: '', plate: ''};
+  showRecEdit();
+}
+function showRecEdit() {
+  const d = S.draft;
+  $('#rec-list-view').hidden = !!d; $('#rec-edit-view').hidden = !d;
+  if (!d) { renderRecList(); save(); return; }
+  $('#rec-name').value = d.name; $('#rec-cooked').value = d.cooked; $('#rec-plate').value = d.plate;
+  $('#rec-state').textContent = d.id ? 'Gespeichertes Rezept' : 'Neues Rezept';
+  $('#rec-delete').hidden = !d.id; $('#rec-err').textContent = '';
+  renderRecItems();
+}
+function recCalc() {
+  const d = S.draft; if (!d) return;
+  const total = sumKH(d.items), raw = sumG(d.items), cooked = num(d.cooked);
+  const base = cooked > 0 ? cooked : raw;
+  const per100 = base > 0 ? total / base * 100 : null;
+  $('#rec-total').textContent = gKH(total);
+  $('#rec-raw').textContent = fmt(raw, 0) + ' g';
+  $('#rec-per100').textContent = per100 == null ? '–' : fmt(per100) + ' g' + (cooked > 0 ? '' : ' (ohne Gargewicht)');
+  const plate = num(d.plate);
+  $('#rec-plate-kh').textContent = per100 != null && plate > 0 ? gKH(per100 * plate / 100) : '–';
+  save();
+  return per100;
+}
+function renderRecItems() { renderItems($('#rec-items'), S.draft.items, 'Füge die Zutaten mit ihrem Rohgewicht hinzu.', recCalc); }
+mountSearch($('#rec-search'), {recipes: false, onPick: f => addItem(S.draft.items, f, $('#rec-items'), renderRecItems)});
+$('#rec-name').addEventListener('input', e => { S.draft.name = e.target.value; $('#rec-err').textContent = ''; save(); });
+$('#rec-cooked').addEventListener('input', e => { S.draft.cooked = e.target.value; recCalc(); });
+$('#rec-plate').addEventListener('input', e => { S.draft.plate = e.target.value; recCalc(); });
+$('#rec-new').addEventListener('click', () => openRecipe(null));
+$('#rec-back').addEventListener('click', () => { S.draft = null; showRecEdit(); });
+function validRecipe() {
+  const d = S.draft;
+  if (!d.name.trim()) return 'Gib dem Rezept einen Namen.';
+  if (!d.items.length) return 'Füge mindestens eine Zutat hinzu.';
+  if (sumG(d.items) <= 0) return 'Trage bei den Zutaten ein Gewicht ein.';
+  return '';
+}
+$('#rec-save').addEventListener('click', () => {
+  const err = validRecipe(); if (err) { $('#rec-err').textContent = err; return; }
+  const d = S.draft, per100 = recCalc();
+  const rec = {id: d.id || 'r_' + Date.now(), name: d.name.trim(), items: d.items.map(i => Object.assign({}, i, {g: String(num(i.g))})), cooked: d.cooked, per100: per100 == null ? null : Math.round(per100 * 10) / 10};
+  const ix = S.recipes.findIndex(r => r.id === rec.id);
+  if (ix >= 0) S.recipes[ix] = rec; else S.recipes.push(rec);
+  d.id = rec.id; $('#rec-state').textContent = 'Gespeichertes Rezept'; $('#rec-delete').hidden = false;
+  save(); toast('Rezept gespeichert');
+});
+$('#rec-to-meal').addEventListener('click', () => {
+  const d = S.draft, per100 = recCalc(), plate = num(d.plate);
+  if (!(per100 > 0 || per100 === 0) || plate <= 0) { $('#rec-err').textContent = 'Trage zuerst Zutaten und das Gewicht deines Tellers ein.'; return; }
+  S.meal.push({id: d.id || 'tmp', name: d.name.trim() || 'Rezept', kh: Math.round(per100 * 10) / 10, g: String(plate), recipe: true});
+  if (d.id) remember(d.id);
+  save(); renderMeal(); toast('Zur Mahlzeit hinzugefügt');
+});
+$('#rec-delete').addEventListener('click', () => {
+  const d = S.draft; if (!d.id) return;
+  if (!confirm('Rezept „' + d.name + '“ löschen?')) return;
+  S.recipes = S.recipes.filter(r => r.id !== d.id); S.draft = null; showRecEdit(); toast('Rezept gelöscht');
+});
+
+// ---------- Zutaten ----------
+let cat = 'Alle';
+function renderFoods() {
+  const cats = ['Alle', 'Eigene'].concat([...new Set(BLS.map(f => f.k))]);
+  $('#food-cats').innerHTML = cats.map(c => `<button class="${c === cat ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('#food-cats').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { cat = b.dataset.c; renderFoods(); }));
+  const q = $('#food-filter').value;
+  let list = allFoods(false);
+  if (q.trim()) { const toks = norm(q).split(' ').filter(Boolean); list = allFoods(false).filter(f => toks.every(t => f._hay.includes(t))); }
+  if (cat !== 'Alle') list = list.filter(f => f.cat === cat);
+  $('#food-count').textContent = (BLS.length + S.own.length) + ' Einträge';
+  const el = $('#food-list');
+  if (!list.length) { el.innerHTML = `<div class="empty">${cat === 'Eigene' && !q ? 'Noch keine eigenen Zutaten.' : 'Keine Treffer.'}</div>`; return; }
+  el.innerHTML = list.map(f => `<div class="li" style="cursor:default"><div><div class="nm">${esc(f.name)}${f.own ? '<span class="tag own">eigene</span>' : ''}</div><div class="meta">${esc(f.own ? 'Eigene Angabe' : f.cat + ' · ' + f.src)}</div></div><div class="row"><span class="val">${fmt(f.kh)} g/100 g</span>${f.own ? `<button class="icon" data-del="${f.id}" aria-label="Löschen">×</button>` : ''}</div></div>`).join('');
+  el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+    const f = S.own.find(x => x.id === b.dataset.del);
+    if (f && confirm('Eigene Zutat „' + f.name + '“ löschen?')) { S.own = S.own.filter(x => x !== f); save(); renderFoods(); }
+  }));
+}
+$('#food-filter').addEventListener('input', renderFoods);
+function clearOwnErr() { $('#own-err').textContent = ''; }
+$('#own-name').addEventListener('input', clearOwnErr); $('#own-kh').addEventListener('input', clearOwnErr);
+$('#own-add').addEventListener('click', () => {
+  const name = $('#own-name').value.trim(), raw = $('#own-kh').value.trim(), kh = parseFloat(raw.replace(',', '.'));
+  if (!name) { $('#own-err').textContent = 'Gib einen Namen ein.'; return; }
+  if (!raw || !isFinite(kh) || kh < 0 || kh > 100) { $('#own-err').textContent = 'Gib einen KH-Wert zwischen 0 und 100 g pro 100 g ein.'; return; }
+  S.own.push({id: 'u_' + Date.now(), name, kh: Math.round(kh * 10) / 10});
+  $('#own-name').value = ''; $('#own-kh').value = '';
+  save(); cat = 'Eigene'; renderFoods(); toast('Zutat angelegt');
+});
+$('#exp').addEventListener('click', () => {
+  const data = JSON.stringify({app: 'KH-Rechner', version: 1, date: new Date().toISOString(), recipes: S.recipes, own: S.own}, null, 2);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], {type: 'application/json'}));
+  a.download = 'kh-rechner-sicherung-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+});
+$('#imp-btn').addEventListener('click', () => $('#imp').click());
+$('#imp').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (!Array.isArray(d.recipes) || !Array.isArray(d.own)) throw 0;
+    const mergeById = (a, b) => { const m = new Map(a.map(x => [x.id, x])); b.forEach(x => m.set(x.id, x)); return [...m.values()]; };
+    S.recipes = mergeById(S.recipes, d.recipes); S.own = mergeById(S.own, d.own);
+    save(); renderFoods(); renderRecList(); toast('Sicherung geladen');
+  } catch (err) { toast('Die Datei ist keine gültige Sicherung'); }
+  e.target.value = '';
+});
+
+// ---------- Navigation ----------
+function setTab(t) {
+  S.tab = t; save();
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t));
+  if (t === 'foods') renderFoods();
+  if (t === 'recipes') showRecEdit();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+renderMeal();
+setTab(['meal', 'recipes', 'foods'].includes(S.tab) ? S.tab : 'meal');
+</script>
+</body>
+</html>
